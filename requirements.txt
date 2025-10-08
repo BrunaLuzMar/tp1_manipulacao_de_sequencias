@@ -1,0 +1,4 @@
+# Este arquivo reúne as dependências essenciais para levantar o servidor Flask e dar suporte ao protótipo de busca.
+# À medida que novas funcionalidades forem planejadas, outras bibliotecas simples poderão ser adicionadas aqui.
+Flask>=2.3.0
+Werkzeug>=2.3.0

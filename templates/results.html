@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Resultados fofinhos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <!-- Esta página exibirá a listagem paginada dos documentos encontrados e destacará os termos procurados. -->
+    <main class="painel-principal layout-resultados">
+      <section class="cartao-fofo topo-consulta">
+        <p class="descricao">Aqui ficará o resumo da consulta atual, oferecendo um lembrete simpático do que está sendo pesquisado.</p>
+        <h2>Consulta fofinha 🌸</h2>
+        <p class="consulta-texto">"{{ consulta }}"</p>
+      </section>
+      <section class="cartao-fofo">
+        <h2>Resultados encontrados</h2>
+        <ul class="lista-resultados">
+          {% for item in resultados %}
+          <li>
+            <article>
+              <h3>{{ item.titulo or "Documento sem título" }}</h3>
+              <p>Trecho: <mark>{{ item.exemplo_destaque or "Trecho com termo destacado" }}</mark></p>
+            </article>
+          </li>
+          {% else %}
+          <li><p>Nenhum resultado encontrado desta vez. Tente outra combinação fofinha.</p></li>
+          {% endfor %}
+        </ul>
+        <nav class="paginacao">
+          <!-- Em breve teremos botões de página; por enquanto, mostramos um esqueleto com espaçadores. -->
+          <button type="button">Anterior</button>
+          <span>Página {{ pagina_atual or 1 }} de {{ total_paginas or 1 }}</span>
+          <button type="button">Próxima</button>
+        </nav>
+      </section>
+      <section class="cartao-fofo formulario-nova-busca">
+        <h3>Deseja refazer a busca?</h3>
+        <form method="get" action="/resultados">
+          <!-- Este formulário replica a experiência da página inicial para consultas rápidas sem redirecionamentos manuais. -->
+          <label for="consulta-nova">Digite outra consulta 🔍</label>
+          <input
+            id="consulta-nova"
+            name="q"
+            type="text"
+            placeholder="ex: ciência OR tecnologia"
+          />
+          <div class="acoes-formulario">
+            <button type="submit">Buscar novamente</button>
+            <button type="reset">Limpar</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
