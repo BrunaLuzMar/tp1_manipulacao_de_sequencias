@@ -68,6 +68,7 @@ class Indexador:
         self.indice_invertido = {} # dict[str, set[str]] = dict[termo, conjunto de documentos]
 
     def indexar_documento(self, doc_id: str, tokens: List[str]):
+        # Importante!!!: O doc_id está sendo passado como string no formato "categoria/nome_arquivo.txt"
         for termo in tokens:
             self.trie.insert(termo)
 

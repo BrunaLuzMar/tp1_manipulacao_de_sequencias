@@ -8,4 +8,4 @@ def buscar_documentos(consulta: str) -> List[str]:
     """Exemplo fictício de função que retornaria os identificadores dos documentos correspondentes."""
     # A versão final analisará a consulta, aplicará filtros booleanos e ordenará os resultados.
     print(f"Processando consulta demonstrativa: {consulta}")
-    return ["doc1.txt", "doc2.txt"]
+    return ["categoria1/doc1.txt", "categoria2/doc2.txt"]
