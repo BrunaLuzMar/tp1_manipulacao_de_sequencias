@@ -9,6 +9,7 @@
 ## 1. Módulo da Trie compacta
 * É a estrutura de dados principal do trabalho.
 * Deve armazenar palavras e associá-las aos documentos em que aparecem.
+** Optei por não associar os nós da árvore aos documenos, quero tentar fazer isso apenas pela lógica do indexador
 * Você não pode usar implementações prontas — precisa criar a sua.
 * Ela será usada pelo índice invertido para mapear termo → lista de documentos.
 

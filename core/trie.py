@@ -79,14 +79,57 @@ class CompressedTrie:
         return False
 
     def imprimir(self) -> None:
-        """Imprime recursivamente a estrutura da Trie com os prefixos comprimidos."""
-        def _imprimir_no(node: TrieNode, indent: str) -> None:
+        """Imprime a estrutura da Trie compacta em formato hierárquico, com prefixos e marcadores."""
+        
+        def _imprimir_no(node: TrieNode, prefixo_visual: str = "", eh_ultimo: bool = True) -> None:
+            # Monta os conectores visuais (semelhantes ao tree do Linux)
+            conector = "└── " if eh_ultimo else "├── "
+            
+            # Define etiqueta e marcador de nó terminal
             etiqueta = node.prefixo if node.prefixo else "<raiz>"
-            marcador = "*" if node.eh_terminal else ""
-            print(f"{indent}{etiqueta}{marcador}")
-            for chave in sorted(node.filhos.keys()):
-                _imprimir_no(node.filhos[chave], indent + "  ")
+            marcador = " *" if node.eh_terminal else ""
+            
+            # Mostra o nó atual
+            print(prefixo_visual + conector + etiqueta + marcador)
 
-        _imprimir_no(self.root, "")
+            # Gera o prefixo visual para os próximos filhos
+            proximo_prefixo = prefixo_visual + ("    " if eh_ultimo else "│   ")
+            
+            # Ordena os filhos para manter a saída estável
+            filhos = list(node.filhos.items())
+            for i, (chave, filho) in enumerate(filhos):
+                _imprimir_no(filho, proximo_prefixo, i == len(filhos) - 1)
 
-# Acho que tá tudo funcionando ok
+        print("Estrutura da Trie Compacta:")
+        _imprimir_no(self.root)
+
+
+def main():
+    trie = CompressedTrie()
+    termos = ["batata", "batalha", "carro", "comput", "computer"]
+
+    for termo in termos:
+        trie.insert(termo)
+
+    print("Estrutura da Trie:")
+    trie.imprimir()
+
+    testes = [
+        "batata",
+        "batalha",
+        "computador",
+        "carro",
+        "ba",
+        "car",
+        "bala",
+        "computer",
+    ]
+
+    print("Resultados da busca na Trie:")
+    for termo in testes:
+        encontrado = trie.busca(termo)
+        status = "encontrado" if encontrado else "não encontrado"
+        print(f" - {termo}: {status}")
+
+if __name__ == "__main__":
+    main()
