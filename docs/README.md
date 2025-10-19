@@ -28,3 +28,12 @@ Exemplo de anotação:
 
 ## Referências
 (Lista de materiais, artigos e documentação consultados.)
+https://en.wikipedia.org/wiki/Radix_tree
+
+https://www.youtube.com/watch?v=H-6-8_p88r0
+
+https://www.youtube.com/watch?v=qA8l8TAMyig
+
+https://www.tutorialspoint.com/data_structures_algorithms/compressed_tries.htm
+
+https://www.youtube.com/watch?v=qakGXuOW1S8&t=91s
