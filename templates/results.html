@@ -6,50 +6,62 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   </head>
   <body>
-    <!-- Esta página exibirá a listagem paginada dos documentos encontrados e destacará os termos procurados. -->
     <main class="painel-principal layout-resultados">
-      <section class="cartao-fofo topo-consulta">
-        <p class="descricao">Aqui ficará o resumo da consulta atual, oferecendo um lembrete simpático do que está sendo pesquisado.</p>
-        <h2>Consulta fofinha 🌸</h2>
-        <p class="consulta-texto">"{{ consulta }}"</p>
-      </section>
+      <!-- 🔹 Lista de resultados -->
       <section class="cartao-fofo">
         <h2>Resultados encontrados</h2>
+        <p>Total de resultados: <strong>{{ total }}</strong></p>
+
         <ul class="lista-resultados">
-          {% for item in resultados %}
-          <li>
-            <article>
-              <h3>{{ item.titulo or "Documento sem título" }}</h3>
-              <p>Trecho: <mark>{{ item.exemplo_destaque or "Trecho com termo destacado" }}</mark></p>
-            </article>
-          </li>
-          {% else %}
-          <li><p>Nenhum resultado encontrado desta vez. Tente outra combinação fofinha.</p></li>
-          {% endfor %}
-        </ul>
+  {% for item in resultados %}
+  <li>
+    <article>
+      <h3>
+        <a href="{{ url_for('exibir_documento', doc_id=item.id) }}">
+          {{ item.titulo }}
+        </a>
+      </h3>
+      <p class="trecho-preview">{{ item.trecho }}</p>
+    
+    </article>
+  </li>
+  {% else %}
+  <li>
+    <p>Nenhum resultado encontrado desta vez. Tente outra combinação fofinha.</p>
+  </li>
+  {% endfor %}
+</ul>
+
+
+        <!-- 🔹 Navegação paginada (placeholder) -->
         <nav class="paginacao">
-          <!-- Em breve teremos botões de página; por enquanto, mostramos um esqueleto com espaçadores. -->
-          <button type="button">Anterior</button>
+          <button type="button" disabled>Anterior</button>
           <span>Página {{ pagina_atual or 1 }} de {{ total_paginas or 1 }}</span>
-          <button type="button">Próxima</button>
+          <button type="button" disabled>Próxima</button>
         </nav>
       </section>
+
+      <!-- 🔹 Formulário para nova busca -->
       <section class="cartao-fofo formulario-nova-busca">
         <h3>Deseja refazer a busca?</h3>
         <form method="get" action="/resultados">
-          <!-- Este formulário replica a experiência da página inicial para consultas rápidas sem redirecionamentos manuais. -->
           <label for="consulta-nova">Digite outra consulta 🔍</label>
           <input
             id="consulta-nova"
             name="q"
             type="text"
             placeholder="ex: ciência OR tecnologia"
+            value="{{ consulta }}"
           />
           <div class="acoes-formulario">
             <button type="submit">Buscar novamente</button>
             <button type="reset">Limpar</button>
           </div>
         </form>
+
+        <p style="margin-top: 1em;">
+          <a href="{{ url_for('homepage') }}">← Voltar à página inicial</a>
+        </p>
       </section>
     </main>
   </body>
