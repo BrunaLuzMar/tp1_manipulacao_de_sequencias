@@ -6,20 +6,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
   </head>
-  <body>
+  <body style="overflow: hidden; height: 100vh;">
     <!-- Esta página inicial apresentará o campo de busca, instruções rápidas e atalhos para o usuário começar as consultas. -->
     <main class="painel-principal">
-      <section class="cartao-fofo">
-        <h1>{{ mensagem_boas_vindas or "Olá! Explore o corpus com carinho." }}</h1>
-        <form method="get" action="/resultados">
-          <!-- O campo abaixo receberá a consulta. No futuro, validações mais robustas poderão ser acrescentadas em JavaScript. -->
-          <label for="consulta">Digite sua consulta 🔍</label>
-          <input id="consulta" name="q" type="text" placeholder="ex: astronomia AND órbita" />
-          <button type="submit">Buscar</button>
-          <button type="button" id="btn-limpar">Limpar</button>
-        </form>
-      </section>
-      <p class="descricao">Este template exibirá uma mensagem de boas-vindas e o formulário para digitar termos com operadores booleanos.</p>
+      
+        <div >
+          <p class="pt-sans-bold">Bubble</p>
+        </div>
+        <section >
+    
+          <form method="get" action="/resultados">
+            <!-- O campo abaixo receberá a consulta. No futuro, validações mais robustas poderão ser acrescentadas em JavaScript. -->
+            <input id="consulta" name="q" type="text" placeholder=" 🔍 " />
+            
+            <button type="submit" class="btn">Buscar</button>
+            <button type="button" id="btn-limpar" class="btn">Limpar</button>
+          </form>
+        </section>
+
+     
+      
+    
     </main>
   </body>
 </html>
+<style>
