@@ -3,6 +3,7 @@ Aqui ficarão as funções de pré-processamento de texto, normalização e regi
 
 import re
 import sys
+import math
 from pathlib import Path
 from typing import Iterable, List, TextIO
 from zipfile import ZipFile
@@ -49,10 +50,9 @@ def acessar_pasta_zip(indexador: "Indexador", arquivo_zip: Path | None = None, l
 
 
 def tokenizar_texto(texto: str) -> List[str]:
-    texto = texto.lower() # Normalização básica para minúsculas
-    palavra_set = texto.split() # Divisão simples por espaços
+    texto = texto.lower()
+    palavra_set = texto.split()
 
-    # Com essa lógica palavras como "co-operativa" viram dois tokens "co" e "operativa" separados -> Precisamos ver se isso é aceitável
     tokens_limpos = []
     for palavra in palavra_set:
         fragmentos = TOKEN_REGEX.findall(palavra)
@@ -62,36 +62,60 @@ def tokenizar_texto(texto: str) -> List[str]:
 
     return tokens_limpos
 
+
 class Indexador:
     def __init__(self):
         self.trie = CompressedTrie()
-        self.indice_invertido = {} # dict[str, set[str]] = dict[termo, conjunto de documentos]
+        # Agora: termo -> {"docs": {doc_id: freq}, "media": float, "desvio": float}
+        self.indice_invertido = {}
 
     def indexar_documento(self, doc_id: str, tokens: List[str]):
-        # Importante!!!: O doc_id está sendo passado como string no formato "categoria/nome_arquivo.txt"
+        """Registra cada termo do documento no índice invertido e na Trie."""
+        contagem = {}
         for termo in tokens:
-            self.trie.insert(termo)
+            contagem[termo] = contagem.get(termo, 0) + 1
 
+        for termo, freq in contagem.items():
+            self.trie.insert(termo)
             if termo not in self.indice_invertido:
-                self.indice_invertido[termo] = set()
-            self.indice_invertido[termo].add(doc_id)
+                self.indice_invertido[termo] = {"docs": {}}
+            self.indice_invertido[termo]["docs"][doc_id] = freq
+
+    def calcular_estatisticas(self):
+        """Calcula média e desvio padrão de frequência por termo."""
+        for termo, dados in self.indice_invertido.items():
+            freqs = list(dados["docs"].values())
+
+            if not freqs:
+                dados["media"] = 0.0
+                dados["desvio"] = 1.0
+                continue
+
+            media = sum(freqs) / len(freqs)
+            variancia = sum((f - media) ** 2 for f in freqs) / len(freqs)
+            desvio = math.sqrt(variancia)
+
+            # 🔸 Impede desvio muito pequeno (evita score alto)
+            if desvio < 1.0:
+                desvio = 1.0
+
+            dados["media"] = media
+            dados["desvio"] = desvio
+
+
 
     def buscar_termo(self, termo: str):
-        # Retorna os documentos associados ao termo
-        if self.trie.busca(termo):
-            return self.indice_invertido.get(termo, set())
+        if termo in self.indice_invertido:
+            return set(self.indice_invertido[termo]["docs"].keys())
         return set()
 
     def imprimir_indice(self, destino: TextIO | None = None) -> None:
-        """Mostra o índice invertido (termo -> doc_ids)."""
         saida = destino if destino is not None else sys.stdout
-        for termo in sorted(self.indice_invertido.keys()):
-            docs = sorted(self.indice_invertido[termo])
-            docs_str = ", ".join(docs)
-            print(f"{termo}: {docs_str}", file=saida)
+        for termo, dados in sorted(self.indice_invertido.items()):
+            docs = ", ".join(f"{doc}:{freq}" for doc, freq in sorted(dados["docs"].items()))
+            print(f"{termo} → {docs} | μ={dados.get('media', 0):.2f}, σ={dados.get('desvio', 0):.2f}", file=saida)
 
     def salvar_indice(self, caminho: Path | str) -> None:
         destino = Path(caminho)
         with destino.open("w", encoding="utf-8") as fp:
             self.imprimir_indice(destino=fp)
-

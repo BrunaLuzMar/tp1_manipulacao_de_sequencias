@@ -1,5 +1,7 @@
-"""Este arquivo atua como porta de entrada do servidor Flask, conectando as camadas de backend e frontend do protótipo de máquina de busca.
-Aqui fica as configurações iniciais do app, o registro das rotas principais e eventuais ganchos para acionar os serviços de indexação e recuperação de documentos."""
+"""
+Este arquivo atua como porta de entrada do servidor Flask, conectando as camadas de backend e frontend do protótipo de máquina de busca.
+Aqui ficam as configurações iniciais do app, o registro das rotas principais e eventuais ganchos para acionar os serviços de indexação e recuperação de documentos.
+"""
 
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -11,20 +13,20 @@ import os
 
 DATA_ZIP = Path("data/bbc-fulltext.zip")
 
-# 1. Instância principal do Flask
+# ------------------------- CONFIGURAÇÃO FLASK -------------------------
 app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
-# 2. Inicialização global do índice
+# ------------------------- INDEXADOR GLOBAL -------------------------
 indexador = Indexador()
 acessar_pasta_zip(indexador, limite=200)
 
 # ------------------------- ROTAS ANGULAR -------------------------
-
 @app.route("/")
 def serve_angular():
     """Serve o index.html do Angular."""
     return render_template("index.html")
+
 
 @app.route("/<path:path>")
 def serve_static_files(path):
@@ -35,7 +37,6 @@ def serve_static_files(path):
     return render_template("index.html")
 
 # ------------------------- ROTAS API -------------------------
-
 @app.route("/api/resultados")
 def api_resultados():
     consulta = request.args.get("q", "").strip()
@@ -43,10 +44,19 @@ def api_resultados():
 
     if consulta:
         termo = consulta.lower()
-        doc_ids = search_docs(termo, indexador.indice_invertido)
+        docs = search_docs(termo, indexador.indice_invertido)
+
+        # 🔹 Compatibilidade: aceita tanto lista de strings quanto de tuplas
+        if docs and isinstance(docs[0], tuple):
+            docs_scores = docs
+        else:
+            docs_scores = [(doc, 0) for doc in docs]
+
+        # 🔸 mostra só os 10 primeiros
+        docs_scores = docs_scores[:15]
 
         with ZipFile(DATA_ZIP) as zf:
-            for doc_id in doc_ids:
+            for doc_id, score in docs_scores:
                 try:
                     with zf.open(f"bbc/{doc_id}") as arquivo:
                         conteudo = arquivo.read().decode("utf-8", errors="ignore")
@@ -54,33 +64,29 @@ def api_resultados():
                         titulo = linhas[0] if linhas else doc_id
                         texto = " ".join(linhas[1:])
 
-                        # procura o termo no texto (case-insensitive)
                         pos = texto.lower().find(termo)
+                        if pos == -1:
+                            continue
 
-                        if pos != -1:
-                            inicio = max(0, pos - 80)
-                            fim = min(len(texto), pos + len(termo) + 80)
-                            trecho = texto[inicio:fim]
+                        inicio = max(0, pos - 80)
+                        fim = min(len(texto), pos + len(termo) + 80)
+                        trecho = texto[inicio:fim]
 
-                            # adiciona destaque na palavra
-                            trecho_realcado = (
-                                trecho[:pos - inicio]
-                                + f"<mark style='background-color:orange; color:black;'>{texto[pos:pos+len(termo)]}</mark>"
-                                + trecho[pos - inicio + len(termo):]
-                            )
+                        trecho_realcado = (
+                            trecho[:pos - inicio]
+                            + f"<mark style='background-color:orange; color:black;'>{texto[pos:pos+len(termo)]}</mark>"
+                            + trecho[pos - inicio + len(termo):]
+                        )
 
-                            # adiciona "..." apenas se houver texto antes ou depois
-                            prefixo = "..." if inicio > 0 else ""
-                            sufixo = "..." if fim < len(texto) else ""
-                            trecho_realcado = f"{prefixo}{trecho_realcado}{sufixo}"
-
-                        else:
-                            trecho_realcado = texto[:160]
+                        prefixo = "..." if inicio > 0 else ""
+                        sufixo = "..." if fim < len(texto) else ""
+                        trecho_realcado = f"{prefixo}{trecho_realcado}{sufixo}"
 
                         resultados.append({
                             "id": doc_id,
                             "titulo": titulo,
-                            "trecho": trecho_realcado.replace("\n", " ")
+                            "trecho": trecho_realcado.replace("\n", " "),
+                            "score": round(score, 3)
                         })
                 except KeyError:
                     pass
@@ -108,6 +114,7 @@ def api_documento(doc_id):
         "conteudo": conteudo_sem_titulo
     })
 
+
 @app.route("/api/autocomplete")
 def api_autocomplete():
     termo = request.args.get("q", "").lower().strip()
@@ -118,6 +125,5 @@ def api_autocomplete():
     return jsonify(sugestoes[:10])
 
 # ------------------------- MAIN -------------------------
-
 if __name__ == "__main__":
     app.run(debug=True)

@@ -39,7 +39,7 @@ class TestIndexador(unittest.TestCase):
         self.assertGreater(len(indexador.indice_invertido), 0, "O índice invertido está vazio!")
 
         # Salva o índice gerado para inspeção
-        arquivo_saida = BASE_PATH / "indice_invertido_completo.txt"
+        arquivo_saida = BASE_PATH / "indice_invertido.txt"
         indexador.salvar_indice(arquivo_saida)
         print(f"{total_docs} documentos indexados.")
         print(f"Índice salvo em: {arquivo_saida}")

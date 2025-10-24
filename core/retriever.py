@@ -1,70 +1,55 @@
 """
-Módulo dedicado a interpretar consultas booleanas e retornar documentos relevantes
-com destaque para os termos buscados.
+Módulo dedicado a interpretar consultas booleanas e retornar documentos relevantes,
+ordenados por relevância (média dos z-scores).
 
-Incluirá a análise dos operadores AND, OR e parênteses,
-além da paginação amigável dos resultados.
+Suporta operadores AND, OR e parênteses, e consultas simples (como "legal amount"),
+tratando a ausência de operadores como AND implícito.
 """
 
 from typing import List, Dict, Set
 import re
+import math
 
 
-
-# 1. Quebrar a consulta em tokens
-
-
+# Tokenização da consulta
 def parse_query(query: str) -> List[str]:
-    """
-    Quebra a string da consulta em tokens.
-    Exemplo:
-        "(casa AND piscina) OR praia"
-    Retorna:
-        ['(', 'CASA', 'AND', 'PISCINA', ')', 'OR', 'PRAIA']
-    """
-    # Corrigido: \w+ em vez de \w (pra capturar palavras inteiras)
-    # e casefold() pra evitar erro com letras maiúsculas/minúsculas
+    """Quebra a consulta em tokens (palavras e operadores)."""
     tokens = re.findall(r'\w+|AND|OR|\(|\)', query.upper())
     return tokens
 
 
-
-# 2. Avaliar a expressão booleana
-
-
-def evaluate_query(tokens: List[str], indice_invertido: Dict[str, Set[str]]) -> Set[str]:
+# Avaliação booleana da expressão
+def evaluate_query(tokens: List[str], indice_invertido: Dict[str, Dict]) -> Set[str]:
     operandos = []   # pilha de conjuntos de documentos
     operadores = []  # pilha de operadores lógicos
 
     def aplicar_operador():
-        """Aplica o operador lógico no topo da pilha."""
         op = operadores.pop()
         direita = operandos.pop()
         esquerda = operandos.pop()
-
         if op == "AND":
-            operandos.append(esquerda & direita)  # interseção
+            operandos.append(esquerda & direita)
         elif op == "OR":
-            operandos.append(esquerda | direita)  # união
+            operandos.append(esquerda | direita)
 
     for token in tokens:
         if token == "(":
             operadores.append(token)
-
         elif token == ")":
             while operadores and operadores[-1] != "(":
                 aplicar_operador()
-            operadores.pop()  # remove "("
-
+            operadores.pop()
         elif token in {"AND", "OR"}:
-            # Garante precedência: AND antes de OR
+            # precedência: AND antes de OR
             while operadores and operadores[-1] == "AND" and token == "OR":
                 aplicar_operador()
             operadores.append(token)
-
         else:
-            # Termo normal → conjunto de documentos
-            operandos.append(indice_invertido.get(token.lower(), set()))
+            termo = token.lower()
+            if termo in indice_invertido:
+                operandos.append(set(indice_invertido[termo]["docs"].keys()))
+            else:
+                operandos.append(set())
 
     while operadores:
         aplicar_operador()
@@ -72,12 +57,69 @@ def evaluate_query(tokens: List[str], indice_invertido: Dict[str, Set[str]]) -> 
     return operandos[0] if operandos else set()
 
 
-
-# 3. Função principal
-
-
-def search_docs(query: str, indice_invertido: Dict[str, Set[str]]) -> List[str]:
-    """Recebe uma consulta booleana e retorna a lista de documentos relevantes."""
+# Função principal — busca e cálculo de relevância
+def search_docs(query: str, indice_invertido: Dict[str, Dict]) -> List[tuple]:
+    """
+    Recebe uma consulta booleana ou simples e retorna os documentos
+    ordenados por relevância (média dos z-scores).
+    Retorna lista de tuplas (doc_id, score).
+    """
     tokens = parse_query(query)
-    result = evaluate_query(tokens, indice_invertido)
-    return sorted(result)
+
+    # AND implícito entre termos (caso o usuário não use operadores)
+    tokens_com_and = []
+    for i, token in enumerate(tokens):
+        tokens_com_and.append(token)
+        if (
+            i + 1 < len(tokens)
+            and token not in {"AND", "OR", "(", ")"}
+            and tokens[i + 1] not in {"AND", "OR", ")", "("}
+        ):
+            tokens_com_and.append("AND")
+
+    # resolve a expressão booleana
+    docs_validos = evaluate_query(tokens_com_and, indice_invertido)
+
+    # extrai apenas os termos "reais" da consulta
+    termos = [
+        t.lower() for t in tokens
+        if re.match(r"^[A-Z]+$", t) and t not in {"AND", "OR"}
+    ]
+
+    # calcula relevância (média dos z-scores)
+    scores = {}
+    for termo in termos:
+        if termo not in indice_invertido:
+            continue
+
+        dados = indice_invertido[termo]
+        media = dados.get("media", 0)
+        desvio = dados.get("desvio", 1e-6)
+
+        # evita divisões por valores muito pequenos
+        if desvio < 1e-3:
+            desvio = 1
+
+        for doc, freq in dados["docs"].items():
+            if doc not in docs_validos:
+                continue
+
+            z = (freq - media) / desvio
+            if z < 0:
+                z = 0
+            z = math.log1p(z)  # ← log natural de (1 + z), suaviza sem igualar tudo
+            scores.setdefault(doc, []).append(z)
+
+    # média dos z-scores por documento
+    media_scores = {
+        doc: sum(zs) / len(zs)
+        for doc, zs in scores.items() if zs
+    }
+
+    # ordena por relevância (maior primeiro)
+    resultados_ordenados = sorted(
+        media_scores.items(), key=lambda x: x[1], reverse=True
+    )
+
+    #  Retorna pares (doc_id, score)
+    return resultados_ordenados
