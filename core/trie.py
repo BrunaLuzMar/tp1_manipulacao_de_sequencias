@@ -71,7 +71,7 @@ class CompressedTrie:
     def sugestoes(self, prefixo: str):
         """
         Retorna todas as palavras na Trie que começam com o prefixo dado.
-        Usada para autocomplete.
+        Corrige o caso em que o prefixo termina no meio de um nó compactado.
         """
         resultados = []
 
@@ -88,31 +88,29 @@ class CompressedTrie:
             letra = prefixo[indice]
             if letra not in node.filhos:
                 return []
+
             node = node.filhos[letra]
             tam = self.commonPrefixLenght(prefixo[indice:], node.prefixo)
-            indice += tam
+
+            # Se o prefixo termina no meio do node.prefixo
             if tam < len(node.prefixo):
-                return []
+                # Se o prefixo realmente terminou aqui (ex: "conn" dentro de "connection")
+                if indice + tam == len(prefixo):
+                    # Caminho é só o prefixo digitado (não inventa o resto do node)
+                    resto = node.prefixo[tam:]  # o que vem depois de "conn" dentro de "connection"
+                    # Explora os filhos normalmente a partir daqui
+                    if node.eh_terminal:
+                        resultados.append(prefixo)
+                    for filho in node.filhos.values():
+                        dfs(filho, prefixo + resto + filho.prefixo)
+                    return resultados
+                else:
+                    return []
+
+            indice += tam
 
         dfs(node, prefixo)
         return resultados
-
-    def imprimir(self) -> None:
-        """Imprime a estrutura da Trie compacta em formato hierárquico, com prefixos e marcadores."""
-
-        def _imprimir_no(node: TrieNode, prefixo_visual: str = "", eh_ultimo: bool = True) -> None:
-            conector = "└── " if eh_ultimo else "├── "
-            etiqueta = node.prefixo if node.prefixo else "<raiz>"
-            marcador = " *" if node.eh_terminal else ""
-            print(prefixo_visual + conector + etiqueta + marcador)
-
-            proximo_prefixo = prefixo_visual + ("    " if eh_ultimo else "│   ")
-            filhos = list(node.filhos.items())
-            for i, (chave, filho) in enumerate(filhos):
-                _imprimir_no(filho, proximo_prefixo, i == len(filhos) - 1)
-
-        print("Estrutura da Trie Compacta:")
-        _imprimir_no(self.root)
 
 
 def main():
