@@ -38,28 +38,55 @@ def serve_static_files(path):
 
 @app.route("/api/resultados")
 def api_resultados():
-    consulta = request.args.get("q", "")
+    consulta = request.args.get("q", "").strip()
     resultados = []
 
     if consulta:
-        doc_ids = search_docs(consulta, indexador.indice_invertido)
+        termo = consulta.lower()
+        doc_ids = search_docs(termo, indexador.indice_invertido)
+
         with ZipFile(DATA_ZIP) as zf:
             for doc_id in doc_ids:
                 try:
                     with zf.open(f"bbc/{doc_id}") as arquivo:
-                        conteudo = arquivo.read().decode("utf-8", errors="ignore").strip()
+                        conteudo = arquivo.read().decode("utf-8", errors="ignore")
                         linhas = [l.strip() for l in conteudo.split("\n") if l.strip()]
                         titulo = linhas[0] if linhas else doc_id
-                        trecho = " ".join(linhas[1:])[:100] + "..." if len(linhas) > 1 else ""
+                        texto = " ".join(linhas[1:])
+
+                        # procura o termo no texto (case-insensitive)
+                        pos = texto.lower().find(termo)
+
+                        if pos != -1:
+                            inicio = max(0, pos - 80)
+                            fim = min(len(texto), pos + len(termo) + 80)
+                            trecho = texto[inicio:fim]
+
+                            # adiciona destaque na palavra
+                            trecho_realcado = (
+                                trecho[:pos - inicio]
+                                + f"<mark style='background-color:orange; color:black;'>{texto[pos:pos+len(termo)]}</mark>"
+                                + trecho[pos - inicio + len(termo):]
+                            )
+
+                            # adiciona "..." apenas se houver texto antes ou depois
+                            prefixo = "..." if inicio > 0 else ""
+                            sufixo = "..." if fim < len(texto) else ""
+                            trecho_realcado = f"{prefixo}{trecho_realcado}{sufixo}"
+
+                        else:
+                            trecho_realcado = texto[:160]
+
                         resultados.append({
                             "id": doc_id,
                             "titulo": titulo,
-                            "trecho": trecho
+                            "trecho": trecho_realcado.replace("\n", " ")
                         })
                 except KeyError:
                     pass
 
     return jsonify(resultados)
+
 
 @app.route("/api/documento/<path:doc_id>")
 def api_documento(doc_id):
