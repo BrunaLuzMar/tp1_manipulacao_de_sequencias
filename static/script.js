@@ -12,3 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+//criar o conteiner de sugestoes
+

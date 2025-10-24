@@ -77,6 +77,34 @@ class CompressedTrie:
                 return node.eh_terminal
 
         return False
+    
+    def sugestoes(self, prefixo: str):
+        """
+        Retorna todas as palavras na Trie que começam com o prefixo dado.
+        Pode ser usada para autocomplete.
+        """
+        resultados = []
+
+        def dfs(node, caminho):
+            if node.eh_terminal:
+                resultados.append(caminho + node.prefixo)
+            for filho in node.filhos.values():
+                dfs(filho, caminho + node.prefixo)
+
+        node = self.root
+        indice = 0
+
+        while indice < len(prefixo):
+            letra = prefixo[indice]
+            if letra not in node.filhos:
+                return []
+            node = node.filhos[letra]
+            tam = self.commonPrefixLenght(prefixo[indice:], node.prefixo)
+            indice += tam
+            if tam < len(node.prefixo):
+                return []
+        dfs(node, prefixo)
+        return resultados
 
     def imprimir(self) -> None:
         """Imprime a estrutura da Trie compacta em formato hierárquico, com prefixos e marcadores."""
