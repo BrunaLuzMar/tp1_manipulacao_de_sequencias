@@ -3,37 +3,29 @@
 Este documento reunirá a documentação final do projeto, descrevendo objetivos, decisões de arquitetura e resultados obtidos, de modo a registrar o processo de construção da máquina de busca e facilitar a avaliação.
 
 ## 1. Introdução
-(Explique o contexto do problema, os objetivos do trabalho e o escopo da solução.)
+O trabalho propõe a construção de uma máquina de busca compacta sobre o corpus BBC News. O protótipo entregue integra uma API em Flask, responsável pela indexação e consulta dos documentos, a uma interface web apelidada de Bubble, produzindo uma experiência única de autocomplete, paginação e destaque de termos. O objetivo principal é demonstrar uma arquitetura completa de recuperação de informação, documentando decisões de engenharia de dados e de experiência do usuário.
 
 ## 2. Metodologia
-(Detalhe como o corpus será tratado, quais estruturas de dados serão utilizadas e como as etapas de indexação e recuperação se conectam.)
+Todo o processamento parte dos arquivos .txt armazenados em data/bbc-fulltext.zip, acessados diretamente a partir do arquivo comprimido para evitar cópias temporárias. Cada documento é transformado em letras minúsculas e tokenizado com a expressão regular TOKEN_REGEX, removendo números e sinais de pontuação. As estatísticas resultantes são armazenadas em um índice invertido que registra frequências, médias e desvios para cada termo, enquanto uma Trie compacta preserva os prefixos necessários ao autocomplete. O pipeline de indexação executa Indexador.indexar_documento a cada texto percorrido por acessar_pasta_zip, garantindo que as frequências sejam acumuladas e os termos inseridos na Trie. Durante a busca, core/retriever.py interpreta a consulta, aceita operadores booleanos AND, OR e parênteses, considera AND implícito entre termos adjacentes e calcula z-scores sobre as frequências antes de aplicar log1p para suavizar outliers. O resultado alimenta três serviços REST: GET /api/resultados devolve documentos ranqueados com trechos marcados, GET /api/documento/<id> expõe o conteúdo integral e GET /api/autocomplete?q= interroga a Trie para fornecer sugestões.
 
 ## 3. Decisões de Projeto
-(Registre escolhas relevantes, como estratégias de compactação na Trie, tratamento de operadores booleanos e abordagem de paginação.)
+A leitura direta do corpus via ZipFile reduziu o consumo de disco e simplificou a distribuição do material de testes. A escolha por uma Trie compacta, em detrimento da estrutura tradicional, minimizou níveis redundantes e acelerou a geração de sugestões, pois o método sugestoes trata prefixos interrompidos no meio de um nó comprimido. A interpretação booleana com AND implícito aumentou a tolerância a consultas livres e aproximou o protótipo de motores comerciais. A normalização por média e desvio evitou que documentos extensos dominassem o ranking apenas pelo volume, enquanto o uso de log1p suavizou valores extremos. O frontend foi concebido como um build Angular desacoplado que consome rotas JSON, exibe o campo de busca com estética neomórfica, executa animações com Three.js e administra a paginação. Para permitir evoluções futuras com clientes hospedados em domínios distintos, o servidor ativa CORS por meio de flask-cors.
 
 ## 4. Implementação
-(Reserve espaço para descrever o funcionamento final dos módulos `core`, o fluxo das rotas Flask e os componentes do frontend.)
-
-```text
-Exemplo de anotação:
-- Estrutura de dados principal: Trie compacta com armazenamento de sufixos compartilhados.
-- Justificativa: economiza memória e acelera buscas de prefixos.
-```
+O arquivo app.py inicializa o Flask, habilita CORS, expõe as rotas do frontend e dos serviços de API e dispara a indexação quando o módulo é carregado, limitada por padrão a duzentos documentos ajustáveis pelo parâmetro limite. A classe Indexador, localizada em core/indexer.py, registra frequências, calcula estatísticas e coordena a comunicação com a Trie, oferecendo utilitários para impressão e persistência do índice. O módulo core/retriever.py opera o parser booleano, avalia a expressão por pilha e produz scores finais. A Trie compacta é implementada em core/trie.py, com métodos de inserção, busca e geração de sugestões que consideram prefixos interrompidos. O frontend é servido por templates/index.html, responsável por carregar os bundles main-3KS6SDDN.js e styles-3MDLF4BX.css; o JavaScript resultante mistura animações de Three.js com a lógica do componente de busca. A suíte mínima de testes encontra-se em tests/test_indexador.py, que percorre todo o corpus, verifica a criação de entradas no índice e salva um relatório em indice_invertido.txt. As dependências essenciais — Flask, Werkzeug e flask-cors — estão declaradas em requirements.txt e foram validadas no ambiente Python 3.12 descrito em .venv/pyvenv.cfg.
 
 ## 5. Exemplos de Uso
-(Traga capturas ou descrições passo a passo de consultas representativas e dos resultados exibidos.)
+Para executar o protótipo é necessário criar um ambiente virtual Python, instalar as dependências listadas em requirements.txt, definir a variável FLASK_APP=app.py e iniciar o servidor com flask run; a interface Bubble fica disponível em http://127.0.0.1:5000/. Ao digitar “economy”, o campo de busca oferece sugestões relacionadas, permite confirmar a consulta e apresenta até quinze documentos com trechos destacados. Em outra situação, a consulta “oil AND prices OR petrol” preserva a precedência do operador AND e evidencia resultados voltados à editoria de energia. Ao selecionar um item da lista, o frontend solicita GET /api/documento/<id> e mostra título, corpo completo e um caminho de retorno à página principal.
 
 ## 6. Conclusões e Trabalhos Futuros
-(Resuma aprendizados, pontos fortes, limitações e sugestões para evoluções.)
+O protótipo confirma a viabilidade de combinar, em Python, uma Trie compacta e um índice invertido suportados por uma camada single-page. O ranqueamento baseado em z-score diferencia frequências anômalas, embora dependa de médias globais simples. Entre as melhorias planejadas destacam-se a execução automática de Indexador.calcular_estatisticas após a indexação, a inclusão de operadores NOT e busca por frases exatas, a persistência do índice em formato binário para acelerar inicializações, a experimentação de métricas como TF-IDF ou BM25 e a ampliação da suíte de testes para cobrir a Trie e o parser booleano.
 
 ## Referências
+As referências consultadas abrangem o verbete “Radix tree” da Wikipedia, materiais audiovisuais dos canais Computerphile, Reducible e WilliamFiset sobre tries compactas, a explicação técnica da Tutorialspoint a respeito de compressed tries e uma apresentação de Katie Kodes sobre o uso dessas estruturas para autocompletar.
+
 (Lista de materiais, artigos e documentação consultados.)
-https://en.wikipedia.org/wiki/Radix_tree
-
-https://www.youtube.com/watch?v=H-6-8_p88r0
-
-https://www.youtube.com/watch?v=qA8l8TAMyig
-
-https://www.tutorialspoint.com/data_structures_algorithms/compressed_tries.htm
-
+https://en.wikipedia.org/wiki/Radix_tree  
+https://www.youtube.com/watch?v=H-6-8_p88r0  
+https://www.youtube.com/watch?v=qA8l8TAMyig  
+https://www.tutorialspoint.com/data_structures_algorithms/compressed_tries.htm  
 https://www.youtube.com/watch?v=qakGXuOW1S8&t=91s

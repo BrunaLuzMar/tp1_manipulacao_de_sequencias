@@ -2,3 +2,5 @@
 # À medida que novas funcionalidades forem planejadas, outras bibliotecas simples poderão ser adicionadas aqui.
 Flask>=2.3.0
 Werkzeug>=2.3.0
+flask-cors
+
