@@ -33,7 +33,7 @@ Em suma, o trabalho alcançou seu objetivo principal de aplicar conceitos teóri
 
 ## Referências
 Radix tree. Disponível em: <https://en.wikipedia.org/wiki/Radix_tree>.
-‌
+
 JAMIEGO. Data Structures in Golang - The trie data structure. Disponível em: <https://www.youtube.com/watch?v=H-6-8_p88r0>. Acesso em: 23 out. 2025.
 ‌
 INSIDE CODE. Trie data structure - Inside code. Disponível em: <https://www.youtube.com/watch?v=qA8l8TAMyig>. Acesso em: 28 out. 2025.
