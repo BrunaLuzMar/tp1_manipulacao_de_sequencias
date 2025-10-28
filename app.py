@@ -45,19 +45,14 @@ def api_resultados():
     resultados = []
 
     if consulta:
-        #  Mantém a consulta completa (com AND/OR)
         docs_scores = search_docs(consulta, indexador.indice_invertido)
-
-        # aceita tanto lista de strings quanto de tuplas
         if docs_scores and isinstance(docs_scores[0], tuple):
             docs_scores = docs_scores
         else:
             docs_scores = [(doc, 0) for doc in docs_scores]
 
-        #mostra só os 15 primeiros
         docs_scores = docs_scores[:15]
 
-        #Extrai termos reais da consulta (sem operadores e parênteses)
         termos = [
             t.lower()
             for t in re.findall(r"[^\W\d_]+", consulta)
@@ -72,30 +67,78 @@ def api_resultados():
                         linhas = [l.strip() for l in conteudo.split("\n") if l.strip()]
                         titulo = linhas[0] if linhas else doc_id
                         texto = " ".join(linhas[1:])
+                        texto_lower = texto.lower()
 
-                        # Tenta encontrar e realçar o primeiro termo presente no texto
-                        trecho_realcado = None
+                        # Localiza a primeira ocorrência de cada termo
+                        posicoes = []
                         for termo in termos:
-                            pos = texto.lower().find(termo)
-                            if pos != -1:
-                                inicio = max(0, pos - 80)
-                                fim = min(len(texto), pos + len(termo) + 80)
+                            match = re.search(re.escape(termo), texto_lower, re.IGNORECASE)
+                            if match:
+                                posicoes.append((termo, match.start(), match.end()))
+
+                        if not posicoes:
+                            trecho_realcado = texto[:160] + "..."
+                        else:
+                            posicoes.sort(key=lambda x: x[1])
+                            primeiro_inicio = posicoes[0][1]
+                            ultimo_fim = posicoes[-1][2]
+
+                            # Caso tenha apenas 1 termo → garantir mínimo de 160 caracteres
+                            if len(posicoes) == 1:
+                                match = posicoes[0]
+                                centro = (match[1] + match[2]) // 2
+                                inicio = max(0, centro - 80)
+                                fim = min(len(texto), centro + 80)
                                 trecho = texto[inicio:fim]
 
-                                trecho_realcado = (
-                                    trecho[:pos - inicio]
-                                    + f"<mark style='background-color:orange; color:black;'>{texto[pos:pos+len(termo)]}</mark>"
-                                    + trecho[pos - inicio + len(termo):]
-                                )
+                                # se for menor que 160, tentar expandir
+                                while len(trecho) < 160 and inicio > 0 and fim < len(texto):
+                                    inicio = max(0, inicio - 10)
+                                    fim = min(len(texto), fim + 10)
+                                    trecho = texto[inicio:fim]
 
+                                for termo, _, _ in posicoes:
+                                    trecho = re.sub(
+                                        re.escape(termo),
+                                        lambda m: f"<mark style='background-color:orange; color:black;'>{m.group(0)}</mark>",
+                                        trecho,
+                                        flags=re.IGNORECASE
+                                    )
                                 prefixo = "..." if inicio > 0 else ""
                                 sufixo = "..." if fim < len(texto) else ""
-                                trecho_realcado = f"{prefixo}{trecho_realcado}{sufixo}"
-                                break  # para no primeiro termo encontrado
+                                trecho_realcado = f"{prefixo}{trecho.strip()}{sufixo}"
 
-                        #  Caso nenhum termo tenha sido encontrado
-                        if not trecho_realcado:
-                            trecho_realcado = texto[:160] + "..."
+                            # Caso tenha mais de um termo
+                            else:
+                                dist = ultimo_fim - primeiro_inicio
+                                if dist <= 160:
+                                    inicio = max(0, primeiro_inicio - 20)
+                                    fim = min(len(texto), ultimo_fim + 20)
+                                    trecho = texto[inicio:fim]
+                                else:
+                                    # Exibir início e fim separados por "..."
+                                    primeiro_trecho = texto[
+                                        max(0, primeiro_inicio - 40):min(len(texto), primeiro_inicio + 40)
+                                    ]
+                                    ultimo_trecho = texto[
+                                        max(0, ultimo_fim - 40):min(len(texto), ultimo_fim + 40)
+                                    ]
+                                    trecho = f"{primeiro_trecho.strip()} ... {ultimo_trecho.strip()}"
+                                    if len(trecho) > 160:
+                                        trecho = trecho[:157] + "..."
+
+                                # Marca os termos
+                                for termo, _, _ in posicoes:
+                                    trecho = re.sub(
+                                        re.escape(termo),
+                                        lambda m: f"<mark style='background-color:orange; color:black;'>{m.group(0)}</mark>",
+                                        trecho,
+                                        flags=re.IGNORECASE
+                                    )
+
+                                prefixo = "..." if primeiro_inicio > 0 else ""
+                                sufixo = "..." if ultimo_fim < len(texto) else ""
+                                trecho_realcado = f"{prefixo}{trecho.strip()}{sufixo}"
 
                         resultados.append({
                             "id": doc_id,
