@@ -10,6 +10,7 @@ from core.retriever import search_docs
 from zipfile import ZipFile
 from pathlib import Path
 import os
+import re
 
 DATA_ZIP = Path("data/bbc-fulltext.zip")
 
@@ -36,6 +37,7 @@ def serve_static_files(path):
         return send_from_directory(app.static_folder, path)
     return render_template("index.html")
 
+
 # ------------------------- ROTAS API -------------------------
 @app.route("/api/resultados")
 def api_resultados():
@@ -43,17 +45,24 @@ def api_resultados():
     resultados = []
 
     if consulta:
-        termo = consulta.lower()
-        docs = search_docs(termo, indexador.indice_invertido)
+        #  Mantém a consulta completa (com AND/OR)
+        docs_scores = search_docs(consulta, indexador.indice_invertido)
 
-        # 🔹 Compatibilidade: aceita tanto lista de strings quanto de tuplas
-        if docs and isinstance(docs[0], tuple):
-            docs_scores = docs
+        # aceita tanto lista de strings quanto de tuplas
+        if docs_scores and isinstance(docs_scores[0], tuple):
+            docs_scores = docs_scores
         else:
-            docs_scores = [(doc, 0) for doc in docs]
+            docs_scores = [(doc, 0) for doc in docs_scores]
 
-        # 🔸 mostra só os 10 primeiros
+        #mostra só os 15 primeiros
         docs_scores = docs_scores[:15]
+
+        #Extrai termos reais da consulta (sem operadores e parênteses)
+        termos = [
+            t.lower()
+            for t in re.findall(r"[^\W\d_]+", consulta)
+            if t.upper() not in {"AND", "OR"}
+        ]
 
         with ZipFile(DATA_ZIP) as zf:
             for doc_id, score in docs_scores:
@@ -64,23 +73,29 @@ def api_resultados():
                         titulo = linhas[0] if linhas else doc_id
                         texto = " ".join(linhas[1:])
 
-                        pos = texto.lower().find(termo)
-                        if pos == -1:
-                            continue
+                        # Tenta encontrar e realçar o primeiro termo presente no texto
+                        trecho_realcado = None
+                        for termo in termos:
+                            pos = texto.lower().find(termo)
+                            if pos != -1:
+                                inicio = max(0, pos - 80)
+                                fim = min(len(texto), pos + len(termo) + 80)
+                                trecho = texto[inicio:fim]
 
-                        inicio = max(0, pos - 80)
-                        fim = min(len(texto), pos + len(termo) + 80)
-                        trecho = texto[inicio:fim]
+                                trecho_realcado = (
+                                    trecho[:pos - inicio]
+                                    + f"<mark style='background-color:orange; color:black;'>{texto[pos:pos+len(termo)]}</mark>"
+                                    + trecho[pos - inicio + len(termo):]
+                                )
 
-                        trecho_realcado = (
-                            trecho[:pos - inicio]
-                            + f"<mark style='background-color:orange; color:black;'>{texto[pos:pos+len(termo)]}</mark>"
-                            + trecho[pos - inicio + len(termo):]
-                        )
+                                prefixo = "..." if inicio > 0 else ""
+                                sufixo = "..." if fim < len(texto) else ""
+                                trecho_realcado = f"{prefixo}{trecho_realcado}{sufixo}"
+                                break  # para no primeiro termo encontrado
 
-                        prefixo = "..." if inicio > 0 else ""
-                        sufixo = "..." if fim < len(texto) else ""
-                        trecho_realcado = f"{prefixo}{trecho_realcado}{sufixo}"
+                        #  Caso nenhum termo tenha sido encontrado
+                        if not trecho_realcado:
+                            trecho_realcado = texto[:160] + "..."
 
                         resultados.append({
                             "id": doc_id,
@@ -123,6 +138,7 @@ def api_autocomplete():
 
     sugestoes = indexador.trie.sugestoes(termo)
     return jsonify(sugestoes[:10])
+
 
 # ------------------------- MAIN -------------------------
 if __name__ == "__main__":
