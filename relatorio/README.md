@@ -24,7 +24,16 @@ Em relação à interface, priorizou-se a compatibilidade e o carregamento efici
 O arquivo `app.py` inicializa o Flask, habilita CORS, expõe as rotas do frontend e dos serviços de API e dispara a indexação quando o módulo é carregado, limitada por padrão a duzentos documentos ajustáveis pelo parâmetro limite. A classe Indexador, localizada em `core/indexer.py`, registra frequências, calcula estatísticas e coordena a comunicação com a Trie, oferecendo utilitários para impressão e persistência do índice. O módulo `core/retriever.py` opera o parser booleano, avalia a expressão por pilha e produz scores finais. A Trie compacta é implementada em `core/trie.py`, com métodos de inserção, busca e geração de sugestões que consideram prefixos interrompidos. O frontend é servido por `templates/index.html`, responsável por carregar os bundles `main-3KS6SDDN.js` e `styles-3MDLF4BX.css`; o JavaScript resultante mistura animações de `Three.js` com a lógica do componente de busca. A suíte mínima de testes encontra-se em `tests/test_indexador.py`, que percorre todo o corpus, verifica a criação de entradas no índice e salva um relatório em `indice_invertido.txt`. As dependências essenciais — Flask, Werkzeug e `flask-cors` — estão declaradas em `requirements.txt` e foram validadas no ambiente Python 3.12 descrito em `.venv/pyvenv.cfg`.
 
 ## 5. Exemplos de Uso
+Para verificar o funcionamento do sistema, foram realizados diversos testes com o corpus da BBC. Inicialmente, após a indexação, a Trie compacta foi inspecionada por meio de inserções de teste, confirmando que prefixos comuns eram devidamente agrupados. Por exemplo, a inserção das palavras “batata” e “batalha” resultou em um nó compartilhado com prefixo “bata”, demonstrando a eficácia da compactação. Consultas de autocompletar, como “ba”, retornaram corretamente sugestões de termos como “batata” e “batalha”, validando o funcionamento do método sugestoes.
 
+### `(economy AND government)`
+-> Botar imagem aqui
+### `(sport OR technology)`
+-> Botar imagem aqui
+### `finance market`
+-> Botar imagem aqui
+
+Os resultados foram ordenados por relevância, exibindo em primeiro lugar os textos com maior densidade relativa dos termos pesquisados. No navegador, a interface de busca permitiu digitar consultas e visualizar os resultados paginados, com dez documentos por página. Cada resultado apresentava um trecho de 160 caracteres do texto original, contendo o termo de busca destacado. Essa funcionalidade foi implementada de forma a reproduzir a experiência típica de um mecanismo de busca, permitindo ao usuário avaliar rapidamente o contexto da ocorrência.
 
 ## 6. Conclusões
 O desenvolvimento do Trabalho Prático 1 permitiu compreender de forma prática como estruturas de dados clássicas podem ser aplicadas em sistemas reais de recuperação de informação. A implementação da Trie compacta demonstrou a importância de otimizar a representação de strings em memória, reduzindo redundâncias e melhorando o tempo de busca. O índice invertido mostrou-se eficiente para relacionar termos e documentos, e o cálculo de relevância com base em z-scores forneceu uma métrica estatística consistente para a ordenação dos resultados.
