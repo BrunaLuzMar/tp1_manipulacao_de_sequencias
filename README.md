@@ -1,20 +1,10 @@
-# Protótipo de Máquina de Busca (Trabalho Prático 1 - DCC207)
+# Manipulação de Sequências (Trabalho Prático 1)
 
-Este repositório apresenta a estrutura inicial de um protótipo de máquina de busca baseado em Flask, pensado para indexar documentos com uma Trie compacta e oferecer consultas booleanas com interface web fofa e acolhedora. O objetivo é servir como guia para implementação futura, destacando onde cada componente será desenvolvido.
+Nesse trabalho, serão abordados aspectos práticos dos algoritmos vistos em aula para manipulação de sequências. Especificamente, serão explorados aspectos de implementação de árvores de prefixo para construção de índices invertidos. O objetivo secundário é fixar o conteúdo e mostra sua aplicabilidade em contextos práticos mais realistas. Entende-se que ao implementar a estrutura o aluno conseguirá compreender melhor os conceitos explorados. Dessa forma, o conteúdo teórico será melhor absorvido e fixado. Além disso, os alunos terão a oportunidade de ver conceitos não abordados na disciplina, no caso específico, bibliotecas para construção de aplicações web e conceitos relacionados a recuperação de informação e máquina de busca.
 
-```python
-# Exemplo ilustrativo de como a aplicação poderá ser iniciada durante o desenvolvimento.
-from app import app
+## Como executar
 
-if __name__ == "__main__":
-    app.run()
-```
-
-> Estruture seu ambiente virtual, instale as dependências e complete cada módulo seguindo as diretrizes do trabalho prático.
-
-## Como executar com segurança
-
-As instruções abaixo ajudam a rodar o protótipo sem risco de inconsistências, mantendo o ambiente isolado e previsível (mesmo que o código ainda seja apenas ilustrativo).
+As instruções abaixo ajudam a rodar o protótipo sem risco de inconsistências.
 
 1. **Criar ambiente virtual**
    ```bash
@@ -38,5 +28,3 @@ As instruções abaixo ajudam a rodar o protótipo sem risco de inconsistências
 5. **Encerrar e limpar**
    - Use `Ctrl+C` para parar o servidor com segurança.
    - Desative o ambiente virtual: `deactivate`.
-
-> Enquanto as funcionalidades reais não forem implementadas, o servidor apenas renderizará as páginas de exemplo. Estas etapas garantem que futuras adições rodem em um ambiente controlado e fácil de depurar.
