@@ -13,6 +13,8 @@ import os
 import re
 
 DATA_ZIP = Path("data/bbc-fulltext.zip")
+OPERADOR_SPLIT_REGEX = re.compile(r"\b(?:and|or)\b", re.IGNORECASE)
+TOKEN_SUFFIX_REGEX = re.compile(r"[^\W\d_]+$")
 
 # ------------------------- CONFIGURAÇÃO FLASK -------------------------
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -175,7 +177,18 @@ def api_documento(doc_id):
 
 @app.route("/api/autocomplete")
 def api_autocomplete():
-    termo = request.args.get("q", "").lower().strip()
+    consulta = request.args.get("q", "")
+    if not consulta or not consulta.strip():
+        return jsonify([])
+
+    segmento_final = OPERADOR_SPLIT_REGEX.split(consulta.lower())[-1]
+    segmento_final = segmento_final.strip()
+
+    match_prefixo = TOKEN_SUFFIX_REGEX.search(segmento_final)
+    if not match_prefixo:
+        return jsonify([])
+
+    termo = match_prefixo.group(0)
     if not termo:
         return jsonify([])
 
