@@ -26,12 +26,22 @@ O arquivo `app.py` inicializa o Flask, habilita CORS, expõe as rotas do fronten
 ## 5. Exemplos de Uso
 Para verificar o funcionamento do sistema, foram realizados diversos testes com o corpus da BBC. Inicialmente, após a indexação, a Trie compacta foi inspecionada por meio de inserções de teste, confirmando que prefixos comuns eram devidamente agrupados. Por exemplo, a inserção das palavras “batata” e “batalha” resultou em um nó compartilhado com prefixo “bata”, demonstrando a eficácia da compactação. Consultas de autocompletar, como “ba”, retornaram corretamente sugestões de termos como “batata” e “batalha”, validando o funcionamento do método sugestoes.
 
-### `(economy AND government)`
--> Botar imagem aqui
-### `(sport OR technology)`
--> Botar imagem aqui
-### `finance market`
--> Botar imagem aqui
+I.`(sport AND technology)`
+![](assets/ex1.png)
+---
+II. `(sport OR technology)`
+![](assets/ex2.png)
+---
+III. `(economy AND government) OR sports`
+
+---
+IV. `finance market`
+![](assets/ex4.png)
+---
+V. `(economy AND (market OR inflation)) OR (economy AND government)`
+![Parte 1](assets/ex5.1.png)
+![Parte 2](assets/ex5.2.png)
+
 
 Os resultados foram ordenados por relevância, exibindo em primeiro lugar os textos com maior densidade relativa dos termos pesquisados. No navegador, a interface de busca permitiu digitar consultas e visualizar os resultados paginados, com dez documentos por página. Cada resultado apresentava um trecho de 160 caracteres do texto original, contendo o termo de busca destacado. Essa funcionalidade foi implementada de forma a reproduzir a experiência típica de um mecanismo de busca, permitindo ao usuário avaliar rapidamente o contexto da ocorrência.
 
