@@ -36,16 +36,15 @@ Para verificar o funcionamento do sistema, foram realizados diversos testes com 
 
 I.`(sport AND technology)`
 ![](assets/ex1.png)
----
+
 II. `(sport OR technology)`
 ![](assets/ex2.png)
----
+
 III. `(economy AND government) OR sports`
 
----
 IV. `finance market`
 ![](assets/ex4.png)
----
+
 V. `(economy AND (market OR inflation)) OR (economy AND government)`
 ![Parte 1](assets/ex5.1.png)
 ![Parte 2](assets/ex5.2.png)
