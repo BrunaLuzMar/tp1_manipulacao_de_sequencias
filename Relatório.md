@@ -26,7 +26,7 @@ O arquivo `app.py` é o ponto de partida da aplicação: ele inicia o servidor F
 ## 5. Exemplos de Uso
 Para verificar o funcionamento do sistema, foram realizados diversos testes com o corpus da BBC. Inicialmente, após a indexação, a Trie compacta foi inspecionada por meio de inserções de teste, confirmando que prefixos comuns eram devidamente agrupados. Por exemplo, a inserção das palavras “batata” e “batalha” resultou em um nó compartilhado com prefixo “bata”, demonstrando a eficácia da compactação. Consultas de autocompletar, como “ba”, retornaram corretamente sugestões de termos como “batata” e “batalha”, validando o funcionamento do método sugestoes.
 
-I.`(sport AND technology)`
+I.`(economy AND government)`
 ![](assets/exemplo1.png)
 
 II. `(sport OR technology)`
