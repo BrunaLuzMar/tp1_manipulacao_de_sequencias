@@ -1,17 +1,19 @@
 import re
 import math
-from typing import List, Dict, Set
+from typing import List, Set, Any
 
 
 def parse_query(query: str) -> List[str]:
     """Tokeniza a consulta, separando operadores e termos."""
     # A ordem importa: AND/OR primeiro
-    tokens = re.findall(r'AND|OR|\(|\)|[^\W\d_]+', query.upper())
+    tokens = re.findall(r"AND|OR|\(|\)|[^\W\d_]+", query.upper())
     return tokens
 
 
-def evaluate_query(tokens: List[str], indice_invertido: Dict[str, Dict]) -> Set[str]:
+def evaluate_query(tokens: List[str], trie: Any) -> Set[str]:
     """Avalia a expressão booleana e retorna os documentos válidos."""
+    if trie is None:
+        return set()
     operandos = []
     operadores = []
     precedencia = {"AND": 2, "OR": 1}
@@ -42,7 +44,9 @@ def evaluate_query(tokens: List[str], indice_invertido: Dict[str, Dict]) -> Set[
             operadores.append(token)
         else:
             termo = token.lower()
-            operandos.append(set(indice_invertido.get(termo, {}).get("docs", {}).keys()))
+            referencia = trie.obter_indice(termo) if trie is not None else None
+            docs_map = referencia["docs"] if referencia and "docs" in referencia else {}
+            operandos.append(set(docs_map.keys()))
 
     while operadores:
         aplicar_operador()
@@ -50,8 +54,10 @@ def evaluate_query(tokens: List[str], indice_invertido: Dict[str, Dict]) -> Set[
     return operandos[0] if operandos else set()
 
 
-def search_docs(query: str, indice_invertido: Dict[str, Dict]) -> List[tuple]:
+def search_docs(query: str, trie: Any) -> List[tuple]:
     """Executa a busca booleana e ordena os documentos por relevância."""
+    if trie is None:
+        return []
     tokens = parse_query(query)
 
     # Adiciona AND implícito
@@ -65,14 +71,15 @@ def search_docs(query: str, indice_invertido: Dict[str, Dict]) -> List[tuple]:
         ):
             tokens_com_and.append("AND")
 
-    docs_validos = evaluate_query(tokens_com_and, indice_invertido)
+    docs_validos = evaluate_query(tokens_com_and, trie)
     termos = [t.lower() for t in tokens if t not in {"AND", "OR", "(", ")"}]
 
     scores = {}
     for termo in termos:
-        if termo not in indice_invertido:
+        referencia = trie.obter_indice(termo) if trie is not None else None
+        dados = referencia if referencia else None
+        if not dados:
             continue
-        dados = indice_invertido[termo]
         media = dados.get("media", 0)
         desvio = dados.get("desvio", 1e-6)
         if desvio < 1e-3:

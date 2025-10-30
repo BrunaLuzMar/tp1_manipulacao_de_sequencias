@@ -7,6 +7,7 @@ class TrieNode:
         self.prefixo = prefixo
         self.filhos = {}  # filhos: dict[str, TrieNode]
         self.eh_terminal = False
+        self.referencia_indice = None  # ponteiro para dados do índice invertido
 
 
 class CompressedTrie:
@@ -31,6 +32,7 @@ class CompressedTrie:
             if not filhoExiste:
                 novoNo = TrieNode(termo[indice:])
                 novoNo.eh_terminal = True
+                # novo termo completo, referência será atribuída posteriormente
                 node.filhos[letra] = novoNo
                 return
 
@@ -42,10 +44,13 @@ class CompressedTrie:
                 novoFilho = TrieNode(node.prefixo[tamPrefixo:])
                 novoFilho.eh_terminal = node.eh_terminal
                 novoFilho.filhos = node.filhos
+                novoFilho.referencia_indice = node.referencia_indice
 
                 node.prefixo = node.prefixo[:tamPrefixo]
                 node.filhos = {novoFilho.prefixo[0]: novoFilho}
                 node.eh_terminal = indice == len(termo)
+                if not node.eh_terminal:
+                    node.referencia_indice = None
 
     def busca(self, termo: str) -> bool:
         node = self.root
@@ -111,6 +116,42 @@ class CompressedTrie:
 
         dfs(node, prefixo)
         return resultados
+
+    def _navegar_ate_termo(self, termo: str):
+        node = self.root
+        indice = 0
+
+        while indice < len(termo):
+            letra = termo[indice]
+            if letra not in node.filhos:
+                return None
+
+            node = node.filhos[letra]
+            tam = self.commonPrefixLenght(termo[indice:], node.prefixo)
+            indice += tam
+
+            if tam < len(node.prefixo):
+                return node if indice == len(termo) and node.eh_terminal else None
+
+        return node if node.eh_terminal else None
+
+    def registrar_indice(self, termo: str, referencia):
+        """
+        Associa a estrutura do índice invertido ao nó terminal do termo.
+        """
+        node = self._navegar_ate_termo(termo)
+        if node is None:
+            return False
+        node.referencia_indice = referencia
+        node.eh_terminal = True
+        return True
+
+    def obter_indice(self, termo: str):
+        """
+        Retorna a referência para o índice invertido armazenado no termo.
+        """
+        node = self._navegar_ate_termo(termo)
+        return node.referencia_indice if node else None
 
 
 def main():

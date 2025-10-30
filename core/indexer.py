@@ -1,6 +1,7 @@
 """Responsável pela leitura dos documentos do corpus, pela construção do índice invertido e pela integração com a Trie compacta.
 Aqui ficarão as funções de pré-processamento de texto, normalização e registro de estatísticas para uso na busca."""
 
+import json
 import re
 import sys
 import math
@@ -79,7 +80,11 @@ class Indexador:
             self.trie.insert(termo)
             if termo not in self.indice_invertido:
                 self.indice_invertido[termo] = {"docs": {}}
-            self.indice_invertido[termo]["docs"][doc_id] = freq
+
+            dados_termo = self.indice_invertido[termo]
+            dados_termo["docs"][doc_id] = freq
+            # mantém a trie sincronizada com o índice invertido em memória
+            self.trie.registrar_indice(termo, dados_termo)
 
     def calcular_estatisticas(self):
         """Calcula média e desvio padrão de frequência por termo."""
@@ -117,5 +122,50 @@ class Indexador:
 
     def salvar_indice(self, caminho: Path | str) -> None:
         destino = Path(caminho)
+        self.calcular_estatisticas()
+        dados_serializados = {}
+        for termo, dados in self.indice_invertido.items():
+            dados_serializados[termo] = {
+                "docs": dados.get("docs", {}),
+                "media": dados.get("media", 0.0),
+                "desvio": dados.get("desvio", 1.0),
+            }
         with destino.open("w", encoding="utf-8") as fp:
-            self.imprimir_indice(destino=fp)
+            json.dump(dados_serializados, fp)
+
+    def carregar_indice(self, caminho: Path | str) -> None:
+        origem = Path(caminho)
+        with origem.open("r", encoding="utf-8") as fp:
+            try:
+                dados_serializados = json.load(fp)
+            except json.JSONDecodeError as exc:
+                raise ValueError("Arquivo de índice inválido ou corrompido.") from exc
+
+        if not isinstance(dados_serializados, dict):
+            raise ValueError("Formato de índice inesperado.")
+
+        self.trie = CompressedTrie()
+        self.indice_invertido = {}
+
+        for termo, dados in dados_serializados.items():
+            if not isinstance(dados, dict):
+                continue
+            docs = dados.get("docs", {})
+            if not isinstance(docs, dict):
+                docs = {}
+
+            media = dados.get("media")
+            desvio = dados.get("desvio")
+            if media is None or desvio is None:
+                freqs = list(docs.values())
+                if freqs:
+                    media = sum(freqs) / len(freqs)
+                    variancia = sum((f - media) ** 2 for f in freqs) / len(freqs)
+                    desvio = math.sqrt(variancia) or 1.0
+                else:
+                    media, desvio = 0.0, 1.0
+
+            estrutura = {"docs": docs, "media": media, "desvio": desvio}
+            self.indice_invertido[termo] = estrutura
+            self.trie.insert(termo)
+            self.trie.registrar_indice(termo, estrutura)

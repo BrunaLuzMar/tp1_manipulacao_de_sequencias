@@ -13,6 +13,7 @@ import os
 import re
 
 DATA_ZIP = Path("data/bbc-fulltext.zip")
+INDEX_FILE = Path("indice_invertido.txt")
 OPERADOR_SPLIT_REGEX = re.compile(r"\b(?:and|or)\b", re.IGNORECASE)
 TOKEN_SUFFIX_REGEX = re.compile(r"[^\W\d_]+$")
 
@@ -22,7 +23,14 @@ CORS(app)
 
 # ------------------------- INDEXADOR GLOBAL -------------------------
 indexador = Indexador()
-acessar_pasta_zip(indexador, limite=200)
+try:
+    if INDEX_FILE.exists():
+        indexador.carregar_indice(INDEX_FILE)
+    else:
+        raise FileNotFoundError
+except (FileNotFoundError, ValueError):
+    acessar_pasta_zip(indexador)
+    indexador.salvar_indice(INDEX_FILE)
 
 # ------------------------- ROTAS ANGULAR -------------------------
 @app.route("/")
@@ -47,13 +55,11 @@ def api_resultados():
     resultados = []
 
     if consulta:
-        docs_scores = search_docs(consulta, indexador.indice_invertido)
+        docs_scores = search_docs(consulta, indexador.trie)
         if docs_scores and isinstance(docs_scores[0], tuple):
             docs_scores = docs_scores
         else:
             docs_scores = [(doc, 0) for doc in docs_scores]
-
-        docs_scores = docs_scores[:15]
 
         termos = [
             t.lower()
