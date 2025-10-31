@@ -169,6 +169,7 @@ def main():
     """
     Teste simples da Trie.
     Insere alguns termos, testa a busca e mostra sugestões por prefixo.
+    (Apenas para fins de testes)
     """
     trie = CompressedTrie()
     termos = ["batata", "batalha", "carro", "comput", "computer", "love"]
