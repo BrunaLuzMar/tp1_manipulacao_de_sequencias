@@ -1,5 +1,6 @@
-# Este arquivo reúne as dependências essenciais para levantar o servidor Flask e dar suporte ao protótipo de busca.
-# À medida que novas funcionalidades forem planejadas, outras bibliotecas simples poderão ser adicionadas aqui.
+# Aqui ficam as dependências básicas pra rodar o servidor Flask
+# e fazer o protótipo de busca funcionar. 
+
 Flask>=2.3.0
 Werkzeug>=2.3.0
 flask-cors
