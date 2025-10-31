@@ -1,4 +1,8 @@
 # Relatório — Trabalho Prático 1
+## Integrantes:
+Bruna Santos - 2023028242
+Ian Godoi - 2022093024
+
 ## 1. Introdução
 O trabalho propõe a construção de uma máquina de busca compacta sobre o corpus BBC News. O trabalho entregue integra uma API em Flask, responsável pela indexação e consulta dos documentos, a uma interface web apelidada de Bubble, produzindo uma experiência única de autocomplete, paginação e destaque de termos. O objetivo principal é aplicar os conhecimentos acerca de árvores de prefixo para construção de índices invertidos, além de fixar o conteúdo ensinado em sala de aula e mostrar sua aplicabilidade em contextos práticos mais realistas. O trabalho também se propõe a instigar o aluno a entrar em contato com linguagens e ferramentas que não são usualmente cobradas ou discutidas no percurso curricular vigente.
 
@@ -16,7 +20,7 @@ Por fim, o sistema foi integrado a uma interface web simples, composta pelo arqu
 ## 3. Decisões de Projeto
 Durante o desenvolvimento, diversas decisões de projeto foram tomadas visando a clareza estrutural e a eficiência de execução. Sendo a primeira delas a leitura direta do corpus via ZipFile, com o objetivo de reduzir o consumo de disco. Durante o desenvolvimento, foi inicialmente utilizado um dicionário em Python para validar o comportamento do índice invertido. Posteriormente, essa estrutura foi incorporada à Trie compacta, de modo que cada nó terminal da árvore passou a armazenar os documentos e frequências associados ao termo. Essa estrutura permitiu realizar operações de interseção e união entre conjuntos de documentos de forma rápida, o que é essencial para a avaliação de consultas booleanas. Optou-se ainda por incluir no índice os parâmetros estatísticos de média e desvio padrão para cada termo, viabilizando o cálculo de relevância por meio de normalização z-score. Essa técnica assegura que termos muito frequentes não dominem o ranking de resultados, equilibrando a importância relativa entre documentos longos e curtos.
 
-No processamento das consultas, foi escolhida uma abordagem baseada em pilhas para a avaliação das expressões booleanas. Essa escolha simplifica a implementação e garante a correta precedência entre os operadores AND e OR, além de permitir o uso de parênteses aninhados. Para o cálculo da relevância, empregou-se uma média logarítmica dos z-scores, suavizando diferenças extremas entre documentos e evitando a concentração de pontuações elevadas em textos que contenham repetições intensas de um mesmo termo.
+No processamento das consultas, foi escolhida uma abordagem baseada em pilhas para a avaliação das expressões booleanas. Essa escolha simplifica a implementação e garante a correta precedência entre os operadores AND e OR, além de permitir o uso de parênteses aninhados. Para o cálculo da relevância, empregou-se uma média logarítmica dos z-scores, suavizando diferenças extremas entre documentos e evitando a concentração de pontuações elevadas em textos que contenham repetições intensas de um mesmo termo. Para tratamento de palavras com hífen, foi decido considerá-las como uma string inteira, por tanto, elas são sugeridas apenas pelo prefixo, ou seja, o hífen foi considerado como caractere da palavra.
 
 Em relação à interface, priorizou-se a compatibilidade e o carregamento eficiente. O arquivo index.html inclui apenas um CSS global mínimo e carrega o bundle principal de JavaScript, onde estão contidos os estilos e scripts específicos do componente. Essa decisão evita sobrecarga de recursos estáticos e torna a aplicação mais leve, ao custo de exigir que o bundle seja carregado corretamente para que o design completo seja exibido. Além de que o frontend foi concebido como um build Angular desacoplado que consome rotas JSON, exibe o campo de busca com estética neomórfica, executa animações com Three.js e administra a paginação. Para permitir evoluções futuras com clientes hospedados em domínios distintos, o servidor ativa CORS por meio de flask-cors.
 
@@ -44,7 +48,6 @@ V. `(economy AND (market OR inflation)) OR (economy AND government)`
 VI. As sugestões aparecem para todos os termos de busca
 ![Primeiro Termo](assets/exemplo6.1.png)
 ![Segundo Termo](assets/exemplo6.2.png)
-
 
 
 Os resultados foram ordenados por relevância, exibindo em primeiro lugar os textos com maior densidade relativa dos termos pesquisados. No navegador, a interface de busca permitiu digitar consultas e visualizar os resultados paginados, com dez documentos por página. Cada resultado apresentava um trecho de 160 caracteres do texto original, contendo o termo de busca destacado. Essa funcionalidade foi implementada de forma a reproduzir a experiência típica de um mecanismo de busca, permitindo ao usuário avaliar rapidamente o contexto da ocorrência.

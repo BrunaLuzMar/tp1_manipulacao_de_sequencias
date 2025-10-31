@@ -1,5 +1,12 @@
+
+
 # Manipulação de Sequências (Trabalho Prático 1)
 
+## Integrantes:
+Bruna Santos - 2023028242
+Ian Godoi - 2022093024
+
+---
 Nesse trabalho, serão abordados aspectos práticos dos algoritmos vistos em aula para manipulação de sequências. Especificamente, serão explorados aspectos de implementação de árvores de prefixo para construção de índices invertidos. O objetivo secundário é fixar o conteúdo e mostra sua aplicabilidade em contextos práticos mais realistas. Entende-se que ao implementar a estrutura o aluno conseguirá compreender melhor os conceitos explorados. Dessa forma, o conteúdo teórico será melhor absorvido e fixado. Além disso, os alunos terão a oportunidade de ver conceitos não abordados na disciplina, no caso específico, bibliotecas para construção de aplicações web e conceitos relacionados a recuperação de informação e máquina de busca.
 
 ## Como executar

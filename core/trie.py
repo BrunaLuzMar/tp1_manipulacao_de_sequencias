@@ -1,5 +1,5 @@
-"""Módulo destinado a abrigar a implementação da Trie compacta responsável por armazenar e recuperar termos indexados.
-A versão final incluirá estruturas de nós comprimidas, manipulação de sufixos compartilhados e métodos eficientes de busca."""
+"""Módulo que implementa a Trie compacta, estrutura de dados responsável por armazenar o índice invertido do sistema. 
+Cada nó armazena prefixos compartilhados entre termos, permitindo buscas, inserções e sugestões de autocompletar de forma eficiente."""
 
 class TrieNode:
 
@@ -16,6 +16,7 @@ class CompressedTrie:
         self.root = TrieNode()
 
     def commonPrefixLenght(self, a: str, b: str) -> int:
+        # Tamanho do prefixo comnum entre a e b
         tam = 0
         while tam < len(a) and tam < len(b) and a[tam] == b[tam]:
             tam += 1
