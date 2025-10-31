@@ -1,4 +1,6 @@
 # Arquivos e pastas que não devem ser versionados
 __pycache__/
 venv/
+.venv/
 *.pyc
+core/__pycache__/
