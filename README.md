@@ -1,6 +1,4 @@
-
-
-# Manipulação de Sequências (Trabalho Prático 1)
+# Trabalho Prático 1 – Manipulação de sequências
 
 ## Integrantes:
 Bruna Santos - 2023028242
