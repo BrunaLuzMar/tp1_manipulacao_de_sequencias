@@ -1,7 +1,7 @@
 # Trabalho Prático 1 – Manipulação de sequências
 
 ## Integrantes:
-Bruna Santos - 2023028242
+Bruna Santos - 2023028242  
 Ian Godoi - 2022093024
 
 ---
