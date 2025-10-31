@@ -11,7 +11,7 @@ class TrieNode:
     """Nó da Trie compacta: guarda um prefixo, os filhos e se é o fim de uma palavra."""
     def __init__(self, prefixo: str = "") -> None:
         self.prefixo = prefixo
-        self.filhos = {}  # chave: letra inicial → nó filho
+        self.filhos = {}  # chave: letra inicial -> nó filho
         self.eh_terminal = False  # indica se o nó representa o fim de uma palavra
         self.referencia_indice = None  # ponteiro pro índice invertido (dados do termo)
 
